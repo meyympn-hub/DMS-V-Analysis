@@ -1,0 +1,818 @@
+---
+title: "prevalence_od"
+output: html_document
+date: "2025-04-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r}
+
+library(readxl)
+prevalence_od <- read_excel("prevalence_od.xlsx")
+View(prevalence_od)
+
+library(ggplot2)
+library(tidyr)
+library(tidyverse)
+
+
+library(ggplot2)
+library(scales)
+library(dplyr)
+
+# Ensure Age Group is ordered correctly (if it's not already)
+prevalence_od$`Age Group` <- factor(prevalence_od$`Age Group`, 
+                                    levels = unique(prevalence_od$`Age Group`))
+
+
+custom_colors <- c("Carious Disease" = "#1f77b4",   # standard blue
+                   "Periodontitis"   = "#08306b",   # dark blue
+                   "Edentulism"      = "#7a0177")   # violet
+ggplot(prevalence_od, aes(x = `Age Group`, y = Prevalence, 
+                          group = interaction(Gender, `Oral Disease`),
+                          linetype = Gender, color = `Oral Disease`)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_linetype_manual(values = c("Male" = "solid", "Female" = "dotted")) +
+  scale_color_manual(values = custom_colors,
+                     labels = c("Carious Disease" = "Carious Disease (number of teeth)",
+                                "Periodontitis" = "Periodontitis",
+                                "Edentulism" = "Edentulism")) +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  labs(title = "Prevalence of Oral Diseases by Age and Gender",
+       x = "Age Group",
+       y = "Prevalence (number of cases in Millions)",
+       color = "Oral Disease",
+       linetype = "Gender") +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white", color = NA)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "right") # Legend to the right
+
+ggsave("prevalence_plot1.png", width = 10, height = 6, dpi = 300)
+
+
+ggplot(prevalence_od, aes(x = `Age Group`, y = Prevalence,
+                          group = Gender, linetype = Gender, color = Gender)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  facet_wrap(~ `Oral Disease`, scales = "free_y") +  # Free Y scale per disease
+  labs(title = "Prevalence of Oral Diseases by Age and Gender",
+       x = "Age Group",
+       y = "Prevalence (number of cases in Millions)",
+       color = "Gender",
+       linetype = "Gender") +
+  theme_minimal() +
+   theme(plot.background = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white", color = NA)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "right")
+
+custom_age_order <- c("12", "35-39", "40-44", "65-69", "70-74", "75-79", "80-84", "85+")
+x_axis_labels <- c("12 years","35-39 years", "40-44 years","65-69 years", "70-74 years", "75-79 years", "80-84 years", "85+ years")
+names(x_axis_labels) <- custom_age_order
+
+
+prev_1 <- ggplot(prevalence_od, aes(x = `Age Group`, y = Prevalence,
+                          group = Gender, linetype = Gender, color = Gender)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(values = c("Male" = "#1f77b4", "Female" = "#08306b")) +
+  scale_x_discrete(labels = x_axis_labels) +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  facet_wrap(~ `Oral Disease`, scales = "free_y") +  # Free Y scale per disease
+  labs(title = "Prevalence of Oral Diseases by Age and Gender",
+       x = "Age Group",
+       y = "Prevalence (number of cases in Millions)",
+       color = "Gender",
+       linetype = "Gender") +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white", color = NA),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "right")
+
+
+
+ggsave("prev_1.png", width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+
+# Get all unique Oral Diseases and Genders
+oral_diseases <- unique(prevalence_od$`Oral Disease`)
+genders <- unique(prevalence_od$Gender)
+
+# Create break rows for all combinations
+break_rows <- expand.grid(
+  `Age Group` = c("//1", "//2"),
+  Gender = genders,
+  `Oral Disease` = oral_diseases,
+  Prevalence = NA_real_,
+  stringsAsFactors = FALSE
+)
+
+# Add the breaks into your dataset
+prevalence_od2 <- bind_rows(prevalence_od, break_rows) %>%
+  mutate(`Age Group` = factor(`Age Group`, levels = custom_age_order))
+
+
+ggplot() +
+  # continuous lines on real data (excluding breaks)
+  geom_line(data = prevalence_od %>% filter(!`Age Group` %in% c("//1", "//2")),
+            aes(x = `Age Group`, y = Prevalence,
+                group = interaction(Gender, `Oral Disease`),
+                color = Gender, linetype = Gender),
+            size = 1.2, na.rm = TRUE) +
+  # points including break points for axis break effect
+  geom_point(data = prevalence_od2,  # data with breaks
+             aes(x = `Age Group`, y = Prevalence,
+                 color = Gender, shape = Gender),
+             size = 2, na.rm = TRUE) +
+  scale_y_continuous(labels = label_number(scale = 1e-6, suffix = "M")) +
+  facet_wrap(~ `Oral Disease`, scales = "free_y") +
+  scale_x_discrete(labels = x_axis_labels) +
+  labs(title = "Prevalence of Oral Diseases by Age and Gender",
+       x = "Age Group",
+       y = "Prevalence (number of cases in Millions)",
+       color = "Gender",
+       linetype = "Gender") +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "white", color = NA),
+        panel.background = element_rect(fill = "white", color = NA),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "right")
+
+
+
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+library(readxl)
+yld_od <- read_excel("yld_od.xlsx")
+View(yld_od)
+
+
+
+
+
+
+
+
+  # Custom color mapping
+custom_colors1 <- c(
+  "Caries Mild"      = "#1f77b4",
+  "Caries Severe"    = "#6baed6",
+  "Periodontitis"    = "#08306b",
+  "Edentulism"       = "#7a0177"
+)
+
+# Replace values in dataset for consistency
+yld_od$`Oral Disease` <- gsub("Carious Disease Mild", "Caries Mild", yld_od$`Oral Disease`)
+yld_od$`Oral Disease` <- gsub("Carious Disease Severe", "Caries Severe", yld_od$`Oral Disease`)
+
+# Create age group labels with 'years'
+x_axis_labels_yld <- setNames(paste0(unique(yld_od$`Age Group`), " years"), unique(yld_od$`Age Group`))
+
+# Plot
+yld_od1 <- ggplot(yld_od, aes(x = `Age Group`, y = `YLD per 100,000`, 
+                              group = interaction(Gender, `Oral Disease`), 
+                              color = `Oral Disease`, 
+                              linetype = Gender)) +
+  geom_line(size = 1) +
+  scale_color_manual(values = custom_colors1) +
+  scale_linetype_manual(values = c("Male" = "solid", "Female" = "dotted")) +
+  scale_x_discrete(labels = x_axis_labels_yld) +  # <- Here we append 'years'
+  facet_wrap(~`Oral Disease`, scales = "free_y") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 12),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"
+  ) +
+  labs(
+    title = "YLDs per 100,000 of Oral Diseases by Age and Gender",
+    x = "Age Group",
+    y = "YLDs per 100,000",
+    color = "Oral Disease",
+    linetype = "Gender"
+  )
+
+# Display the plot
+yld_od1
+
+
+ggsave("yld_od1.png", width = 10, height = 6, dpi = 300)
+
+
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+socialstatus <- read_excel("socialstatus.xlsx")
+View(socialstatus)
+
+socialstatus_long <- socialstatus %>%
+  pivot_longer(cols = `low-income`:`high-income`,
+               names_to = "income_group",
+               values_to = "prevalence")
+
+# Apply label formatting
+socialstatus_long <- socialstatus_long %>%
+  mutate(
+    gender = factor(gender, levels = c("Male", "Female")),  # ensures left: male, right: female
+    income_group = factor(income_group, 
+                          levels = c("low-income", "middle-income", "high-income")),
+    disease = recode(disease,
+                     "carious" = "Carious Disease",
+                     "periodontitis" = "Periodontitis",
+                     "edentulism" = "Edentulism"),
+    disease = factor(disease, 
+                     levels = c("Carious Disease", "Periodontitis", "Edentulism"))
+  )
+
+# Custom purple shades
+purple_shades <- c("low-income" = "#d0a9f5", 
+                   "middle-income" = "#a86cf0", 
+                   "high-income" = "#6a0dad")
+
+# Create grouped bar chart
+prevalence_ses <- ggplot(socialstatus_long, aes(x = disease, y = prevalence * 100, fill = income_group)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  facet_wrap(~ gender) +
+  scale_fill_manual(
+    name = "Socio-Economic Status",
+    values = purple_shades,
+    labels = c("Low-Income", "Middle-Income", "High-Income")
+  ) +
+  labs(
+    title = "Prevalence of Oral Diseases by Gender and Socio-Economic Status",
+    x = NULL,
+    y = "Prevalence (in %)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 12),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"  # <- this places it to the right
+  )
+
+ggsave("prevalence_ses.png", width = 10, height = 6, dpi = 300)
+
+
+```
+
+```{r}
+library(readxl)
+yld_od <- read_excel("yld_od.xlsx")
+View(yld_od)
+df <- read_excel("yld_od.xlsx")
+colnames(df) <- c("Age_Group", "Gender", "Oral_Disease", "YLD_per_100k")
+
+df <- df %>%
+  mutate(
+    YLD_per_100k = as.numeric(YLD_per_100k),
+    Age_Group = factor(Age_Group, levels = c("12", "35-39", "40-44", "45-49", "50-54", "55-59",
+                                              "60-64", "65-69", "70-74", "75-79", "80-84", "85+")),
+    Gender = as.factor(Gender),
+    Oral_Disease = as.factor(Oral_Disease)
+  )
+
+# Fill in missing combinations
+df_complete <- df %>%
+  complete(Age_Group, Gender, Oral_Disease, fill = list(YLD_per_100k = 0))
+
+# ✅ Final working stacked area chart
+
+ggplot(df_complete, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, group = Oral_Disease)) +
+  geom_area(position = "stack") +
+  facet_wrap(~ Gender, ncol = 1) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Total YLDs per 100,000 of Oral Diseases by Age and Gender",
+       x = "Age Group", y = "YLDs per 100,000") +
+  scale_fill_brewer(palette = "Set2") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+```
+```{r}
+
+
+
+
+# Filter the data for Male and exclude age groups between 49 and 64
+df_male <- df_complete %>% 
+  filter(Gender == "Male" & !(Age_Group %in% c("45-49", "50-54", "55-59", "60-64")))
+
+# Plot for Male with updated title, legend and colors
+total_yld_male <- ggplot(df_male, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, group = Oral_Disease)) +
+  geom_area(position = "stack") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Total YLDs of Oral Diseases per 100,000 by Age for Males",
+       x = "Age Group", 
+       y = "YLDs per 100,000", 
+       fill = "Oral Disease") +  # Updated legend title
+  scale_fill_brewer(palette = "Set2", 
+                    labels = c("Mild Carious Disease", "Severe Carious Disease", 
+                               "Periodontitis", "Edentulism")) +  # Adjusted labels for the four categories
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+   theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 12),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"  # <- this places it to the right
+  )
+
+
+ggsave("total_yld_male.png", width = 10, height = 6, dpi = 300)
+
+
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(purrr)
+```
+
+
+```{r}
+ library(dplyr)
+library(ggplot2)
+library(forcats)
+library(dplyr)
+library(ggplot2)
+
+library(ggplot2)
+library(dplyr)
+library(forcats)
+
+library(ggplot2)
+library(dplyr)
+
+# Use unique internal codes, but show both as "//" in the final plot
+custom_age_order <- c("12", "//1", "35-39", "40-44", "//2", "65-69", "70-74", "75-79", "80-84", "85+")
+x_axis_labels <- c("12 years", "//", "35–39 years", "40–44 years", "//", 
+                   "65–69 years", "70–74 years", "75–79 years", "80–84 years", "85+ years")
+names(x_axis_labels) <- custom_age_order
+# Prepare data
+df_male <- df_complete %>%
+  filter(Gender == "Male" & !(Age_Group %in% c("45-49", "50-54", "55-59", "60-64"))) %>%
+  mutate(Age_Group = case_when(
+    Age_Group == "12" ~ "12",
+    Age_Group == "35-39" ~ "35-39",
+    Age_Group == "40-44" ~ "40-44",
+    Age_Group == "65-69" ~ "65-69",
+    Age_Group == "70-74" ~ "70-74",
+    Age_Group == "75-79" ~ "75-79",
+    Age_Group == "80-84" ~ "80-84",
+    Age_Group == "85+" ~ "85+",
+    TRUE ~ Age_Group
+  )) %>%
+  # Insert dummy rows with unique break labels
+  bind_rows(
+    data.frame(Age_Group = c("//1", "//2"), YLD_per_100k = NA, Oral_Disease = NA, Gender = "Male")
+  ) %>%
+  mutate(Age_Group = factor(Age_Group, levels = custom_age_order))
+
+# Plot with visual breaks
+total_yld_male_break1 <- ggplot(df_male, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, group = Oral_Disease)) +
+  geom_area(position = "stack", na.rm = TRUE) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Total YLDs of Oral Diseases per 100,000 by Age for Males",
+       x = "Age Group", 
+       y = "YLDs per 100,000", 
+       fill = "Oral Disease") +
+scale_fill_brewer(
+  palette = "Set2",
+  labels = c("Mild Carious Disease", "Severe Carious Disease", "Periodontitis", "Edentulism"),
+  na.translate = FALSE  # <-- this hides the grey NA swatch in the legend
+) +
+  scale_x_discrete(labels = x_axis_labels) +  # Show both breaks as "//"
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"
+  )
+
+# Save the updated chart
+ggsave("total_yld_male_break1.png", width = 10, height = 6, dpi = 300)
+
+
+
+```
+
+
+```{r}
+# Filter the data for Female and exclude age groups between 49 and 64
+df_female <- df_complete %>% 
+  filter(Gender == "Female" & !(Age_Group %in% c("45-49", "50-54", "55-59", "60-64")))
+
+# Plot for Female with updated title, legend and colors
+total_yld_female <- ggplot(df_female, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, group = Oral_Disease)) +
+  geom_area(position = "stack") +
+  theme_minimal(base_size = 14) +
+  labs(title = "Total YLDs of Oral Diseases per 100,000 by Age for Females",
+       x = "Age Group", 
+       y = "YLDs per 100,000", 
+       fill = "Oral Disease") +  # Updated legend title
+  scale_fill_brewer(palette = "Set2", 
+                    labels = c("Mild Carious Disease", "Severe Carious Disease", 
+                               "Periodontitis", "Edentulism")) +  # Adjusted labels for the four categories
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 12),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"  # <- this places it to the right
+  )
+
+
+# Save the plot for Female
+ggsave("total_yld_female.png", plot = total_yld_female, width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Define custom age order with unique internal codes for breaks
+custom_age_order <- c("12", "//1", "35-39", "40-44", "//2", "65-69", "70-74", "75-79", "80-84", "85+")
+x_axis_labels <- c("12 years", "//", "35-39 years", "40-44 years", "//", "65-69 years", "70-74 years", "75-79 years", "80-84 years", "85+ years")
+
+# Prepare Female data
+df_female <- df_complete %>%
+  filter(Gender == "Female" & !(Age_Group %in% c("45-49", "50-54", "55-59", "60-64"))) %>%
+  mutate(Age_Group = case_when(
+    Age_Group == "14" ~ "14",
+    Age_Group == "35-39" ~ "35-39",
+    Age_Group == "40-44" ~ "40-44",
+    Age_Group == "65-69" ~ "65-69",
+    Age_Group == "70-74" ~ "70-74",
+    Age_Group == "75-79" ~ "75-79",
+    Age_Group == "80-84" ~ "80-84",
+    Age_Group == "85+" ~ "85+",
+    TRUE ~ Age_Group
+  )) %>%
+  # Insert dummy rows to create axis breaks
+  bind_rows(
+    data.frame(Age_Group = c("//1", "//2"), YLD_per_100k = NA, Oral_Disease = NA, Gender = "Female")
+  ) %>%
+  mutate(Age_Group = factor(Age_Group, levels = custom_age_order))
+
+# Plot for Female
+total_yld_female_break1 <- ggplot(df_female, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, group = Oral_Disease)) +
+  geom_area(position = "stack", na.rm = TRUE) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Total YLDs of Oral Diseases per 100,000 by Age for Females",
+       x = "Age Group", 
+       y = "YLDs per 100,000", 
+       fill = "Oral Disease") +
+  scale_fill_brewer(palette = "Set2",
+                    labels = c("Mild Carious Disease", "Severe Carious Disease", 
+                               "Periodontitis", "Edentulism")) +
+  scale_x_discrete(labels = x_axis_labels) +  # Use // instead of //1, //2
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.text = element_text(size = 12),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"
+  )
+
+# Display and save
+ggsave("total_yld_female_break1.png", width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+
+library(readxl)
+gbd_idz <- read_excel("gbd_idz.xlsx")
+View(gbd_idz)
+df <- read_excel("gbd_idz.xlsx", sheet = "Sheet1")
+
+
+c_p_gbd <- ggplot(df, aes(x = `age group`)) +
+  geom_line(aes(
+    y = gbd_c_p,
+    color = "Prevalence of Carious Disease of Permanent Teeth in GBD",
+    group = sex
+  )) +
+  geom_line(aes(
+    y = idz_c_p,
+    color = "Prevalence of Carious Disease of Permanent Teeth in DMS V (number of teeth)",
+    group = sex
+  )) +
+  facet_grid(. ~ factor(sex, levels = c("Male", "Female"))) +
+  scale_y_continuous(
+    labels = function(x) paste0(x / 1e6, "M")
+  ) +
+  labs(
+    title = "Comparison of Prevalence of Carious Disease of Permanent Teeth, by Age and Gender",
+    y = "Prevalence (in Millions)",
+    x = "Age Group",
+    color = "Source"
+  ) +
+  scale_color_manual(values = c(
+    "Prevalence of Carious Disease of Permanent Teeth in GBD" = "red",
+    "Prevalence of Carious Disease of Permanent Teeth in DMS V (number of teeth)" = "deepskyblue"
+  )) +
+  scale_x_discrete(labels = function(x) paste0(x, " years")) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+        panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+  )
+
+
+ggsave("c_p_gbd.png", plot = c_p_gbd, width = 10, height = 6, dpi = 300)
+
+
+```
+
+
+```{r}
+c_yld_gbd <- ggplot(df, aes(x = `age group`)) +
+  geom_line(aes(
+    y = gbd_c_yld,
+    color = "YLDs per 100,000 for Carious Disease of Permanent Teeth in GBD (number of cases)",
+    group = sex
+  )) +
+  geom_line(aes(
+    y = idz_cm_yld,
+    color = "YLDs per 100,000 for Mild Carious Disease in DMS V (number of teeth)",
+    linetype = "Mild",
+    group = sex
+  )) +  # severe first
+  geom_line(aes(
+    y = idz_cs_yld,
+    color = "YLDs per 100,000 for Severe Carious Disease in DMS V (number of teeth)",
+    linetype = "Severe",
+    group = sex
+  )) +  # mild second
+  facet_grid(. ~ factor(sex, levels = c("Male", "Female"))) +
+  scale_y_continuous(
+    labels = function(x) paste0(formatC(x, format = "f", big.mark = ",", digits = 0))
+  ) +
+  labs(
+    title = "Comparison of YLDs for Carious Disease of Permanent Teeth, by Age and Gender",
+    y = "YLDs per 100,000",
+    x = "Age Group",
+    color = "Source",
+    linetype = "Severity"
+  ) +
+  scale_color_manual(values = c(
+    "YLDs per 100,000 for Carious Disease of Permanent Teeth in GBD (number of cases)" = "red",
+    "YLDs per 100,000 for Mild Carious Disease in DMS V (number of teeth)" = "deepskyblue",
+    "YLDs per 100,000 for Severe Carious Disease in DMS V (number of teeth)" = "deepskyblue"
+  )) +
+  scale_linetype_manual(values = c("Mild" = "solid", "Severe" = "dotted")) +
+    scale_x_discrete(labels = function(x) paste0(x, " years")) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+ggsave("c_yld_gbd.png", plot = c_yld_gbd, width = 10, height = 6, dpi = 300)
+
+```
+
+```{r}
+ p_p_gbd <- ggplot(df, aes(x = `age group`)) +
+  geom_line(aes(
+    y = gbd_p_p,
+    color = "Prevalence of Periodontitis in GBD",
+    group = sex
+  )) +
+  geom_line(aes(
+    y = idz_p_p,
+    color = "Prevalence of Periodontitis in DMS V",
+    group = sex
+  )) +
+  facet_grid(. ~ factor(sex, levels = c("Male", "Female"))) +
+  scale_y_continuous(
+    labels = function(x) paste0(x / 1e6, "M")
+  ) +
+  labs(
+    title = "Comparison of Prevalence of Periodontitis, by Age and Gender",
+    y = "Prevalence (in Millions)",
+    x = "Age Group",
+    color = "Source"
+  ) +
+  scale_color_manual(values = c(
+    "Prevalence of Periodontitis in GBD" = "red",
+    "Prevalence of Periodontitis in DMS V" = "deepskyblue"
+  )) +
+    scale_x_discrete(labels = function(x) paste0(x, " years")) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+ggsave("p_p_gbd.png", plot = p_p_gbd, width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+p_yld_gbd <- ggplot(df, aes(x = `age group`)) +
+  geom_line(aes(
+    y = gbd_p_yld,
+    color = "YLDs for Periodontitis in GBD",
+    group = sex
+  )) +
+  geom_line(aes(
+    y = idz_p_yld,
+    color = "YLDs for Periodontitis in DMS V",
+    group = sex
+  )) +
+  facet_grid(. ~ factor(sex, levels = c("Male", "Female"))) +
+  scale_y_continuous(
+    labels = scales::comma
+  ) +
+  labs(
+    title = "Comparison of YLDs for Periodontitis, by Age and Gender",
+    y = "YLDs per 100,000",
+    x = "Age Group",
+    color = "Source"
+  ) +
+  scale_color_manual(values = c(
+    "YLDs for Periodontitis in GBD" = "red",
+    "YLDs for Periodontitis in DMS V" = "deepskyblue"
+  )) +
+    scale_x_discrete(labels = function(x) paste0(x, " years")) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+ggsave("p_yld_gbd.png", plot = p_yld_gbd, width = 10, height = 6, dpi = 300)
+```
+
+
+```{r}
+
+e_p_gbd <- ggplot(df, aes(x = `age group`)) +
+  geom_line(aes(
+    y = gbd_e_p,
+    color = "Prevalence of Edentulism in GBD",
+    group = sex
+  )) +
+  geom_line(aes(
+    y = idz_e_p,
+    color = "Prevalence of Edentulism in DMS V",
+    group = sex
+  )) +
+  facet_grid(. ~ factor(sex, levels = c("Male", "Female"))) +
+  scale_y_continuous(
+    labels = function(x) paste0(x / 1e6, "M")
+  ) +
+  labs(
+    title = "Comparison of Prevalence of Edentulism, by Age and Gender",
+    y = "Prevalence (in Millions)",
+    x = "Age Group",
+    color = "Source"
+  ) +
+  scale_color_manual(values = c(
+    "Prevalence of Edentulism in GBD" = "red",
+    "Prevalence of Edentulism in DMS V" = "deepskyblue"
+  )) +
+    scale_x_discrete(labels = function(x) paste0(x, " years")) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+ggsave("e_p_gbd.png", plot = e_p_gbd, width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r}
+e_yld_gbd <- ggplot(df, aes(x = `age group`)) +
+  geom_line(aes(
+    y = gbd_e_yld,
+    color = "YLDs for Edentulism in GBD",
+    group = sex
+  )) +
+  geom_line(aes(
+    y = idz_e_yld,
+    color = "YLDs for Edentulism in DMS V",
+    group = sex
+  )) +
+  facet_grid(. ~ factor(sex, levels = c("Male", "Female"))) +
+  scale_y_continuous(
+    labels = scales::comma
+  ) +
+  labs(
+    title = "Comparison of YLDs for Edentulism, by Age and Gender",
+    y = "YLDs per 100,000",
+    x = "Age Group",
+    color = "Source"
+  ) +
+  scale_color_manual(values = c(
+    "YLDs for Edentulism in GBD" = "red",
+    "YLDs for Edentulism in DMS V" = "deepskyblue"
+  )) +
+    scale_x_discrete(labels = function(x) paste0(x, " years")) +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 9),
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+
+
+ggsave("e_yld_gbd.png", plot = e_yld_gbd, width = 10, height = 6, dpi = 300)
+
+
+
+```
+
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
