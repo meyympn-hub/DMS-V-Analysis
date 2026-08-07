@@ -40,7 +40,8 @@ dmsv-oral-health-analysis/
 
 1. Obtain the DMS V dataset from the original data provider (see `data/README.md`) and place the raw files in `data/`.
 2. Open Stata and set your working directory to `code/`.
-3. Run `00_run_all.do`, or run scripts `01` through `07` individually in order.
+3. Run `00_run_all.do`, or run scripts `01` through `06` individually in order.
+4. 07_code_R is an R markdown file which can be used to apply to the number derived from the above analysis, to provide visualizations.
 
 ## Data
 
