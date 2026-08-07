@@ -2,8 +2,7 @@
 * 00_run_all.do
 *
 * Purpose : Run the full analysis pipeline from raw data to results, in order.
-*           Run this file from within the code/ folder (or set your working
-*           directory to code/ first).
+*           Run this file from within the code/ folder (or set your wd to code/ first).
 *==============================================================================
 
 do "01_import_merge.do"
