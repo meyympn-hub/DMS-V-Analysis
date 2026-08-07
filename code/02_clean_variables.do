@@ -26,7 +26,7 @@ replace studygroup = 4 if alter >= 75 & alter <= 100  // Aeltere Senioren
 label define studygroup 4 "Aeltere Senioren", add
 
 *------------------------------------------------------------------
-* Create new, finer age groups (agegrpNEU) for stratified analysis
+* Create new, aggregated age groups (agegrpNEU) for stratified analysis
 *------------------------------------------------------------------
 gen agegrpNEU = 0   // default: children (studygroup 1)
 
