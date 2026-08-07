@@ -1,7 +1,7 @@
 *==============================================================================
 * 04_weighting.do
 *
-* Purpose : Declare the survey design (sampling weights) so that subsequent
+* Purpose : Add the survey design (sampling weights) so that subsequent
 *           `svy:` commands produce weighted, nationally representative
 *           estimates.
 *
