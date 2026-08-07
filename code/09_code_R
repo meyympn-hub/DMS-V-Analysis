@@ -30,7 +30,7 @@ library(ggplot2)
 library(scales)
 library(dplyr)
 
-# Ensure Age Group is ordered correctly (if it's not already)
+# Age Group Ordered correctly
 prevalence_od$`Age Group` <- factor(prevalence_od$`Age Group`, 
                                     levels = unique(prevalence_od$`Age Group`))
 
@@ -306,7 +306,7 @@ df <- df %>%
 df_complete <- df %>%
   complete(Age_Group, Gender, Oral_Disease, fill = list(YLD_per_100k = 0))
 
-# ✅ Final working stacked area chart
+# stacked area chart
 
 ggplot(df_complete, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, group = Oral_Disease)) +
   geom_area(position = "stack") +
@@ -325,7 +325,7 @@ ggplot(df_complete, aes(x = Age_Group, y = YLD_per_100k, fill = Oral_Disease, gr
 
 
 
-# Filter the data for Male and exclude age groups between 49 and 64
+# Filter the data for Male and exclude age groups between 49 and 64 (these age groups were absent in the used dataset)
 df_male <- df_complete %>% 
   filter(Gender == "Male" & !(Age_Group %in% c("45-49", "50-54", "55-59", "60-64")))
 
@@ -376,7 +376,7 @@ library(forcats)
 library(ggplot2)
 library(dplyr)
 
-# Use unique internal codes, but show both as "//" in the final plot
+# Use unique internal codes, but show both as "//" in the final plot (to display age groups uniformly)
 custom_age_order <- c("12", "//1", "35-39", "40-44", "//2", "65-69", "70-74", "75-79", "80-84", "85+")
 x_axis_labels <- c("12 years", "//", "35–39 years", "40–44 years", "//", 
                    "65–69 years", "70–74 years", "75–79 years", "80–84 years", "85+ years")
@@ -431,7 +431,7 @@ ggsave("total_yld_male_break1.png", width = 10, height = 6, dpi = 300)
 
 
 ```{r}
-# Filter the data for Female and exclude age groups between 49 and 64
+# Filter the data for Female and exclude age groups between 49 and 64 (these age groups were absent in the used dataset)
 df_female <- df_complete %>% 
   filter(Gender == "Female" & !(Age_Group %in% c("45-49", "50-54", "55-59", "60-64")))
 
