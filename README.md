@@ -26,8 +26,7 @@ dmsv-oral-health-analysis/
 │   ├── 04_weighting.do
 │   ├── 05_dental_caries.do
 │   ├── 06_periodontitis.do
-│   ├── 07_figures.do
-│   └── 08_tables.do
+│   ├── 07_code_R
 ├── data/
 │   └── README.md
 ├── results/
@@ -41,7 +40,7 @@ dmsv-oral-health-analysis/
 
 1. Obtain the DMS V dataset from the original data provider (see `data/README.md`) and place the raw files in `data/`.
 2. Open Stata and set your working directory to `code/`.
-3. Run `00_run_all.do`, or run scripts `01` through `08` individually in order.
+3. Run `00_run_all.do`, or run scripts `01` through `07` individually in order.
 
 ## Data
 
