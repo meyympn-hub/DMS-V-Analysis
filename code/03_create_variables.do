@@ -64,7 +64,7 @@ tab pi_index
 recode pi_index (1/2 = 1)
 tab pi_index
 
-* Cross-tabs for a quick sanity check of distributions by age group
+* Cross-tabs for check of distributions by age group
 tab pi_index agegrpNEU
 tab dt_index_new agegrpNEU
 
