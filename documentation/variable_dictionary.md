@@ -1,6 +1,6 @@
 # Variable Dictionary
 
-Variables from the raw DMS V dataset, and derived variables created by the analysis pipeline.
+Variables from the raw DMS V dataset, and derived variables created by the analysis.
 
 ## Raw variables (from DMS V)
 
@@ -8,13 +8,13 @@ Variables from the raw DMS V dataset, and derived variables created by the analy
 |------------|---------------------------------------------------------------------|
 | `geschl`   | Sex (1 = male, 2 = female)                                          |
 | `alter`    | Age in years                                                        |
-| `dmft`     | DMFT index (decayed, missing, filled teeth) — adult version         |
-| `dt`       | Decayed teeth count — adult version                                 |
-| `dt28`     | Decayed teeth count — alternate/child version                       |
+| `dmft`     | DMFT index (decayed, missing, filled teeth) — adult          |
+| `dt`       | Decayed teeth count — adult                                  |
+| `dt28`     | Decayed teeth count — child                      |
 | `ft`       | Filled teeth count — adult version                                  |
-| `ft28`     | Filled teeth count — alternate/child version                        |
-| `cpifm`    | Periodontitis indicator — one variable version                      |
-| `cpipm100` | Periodontitis indicator — alternate variable version                |
+| `ft28`     | Filled teeth count — child                         |
+| `cpifm`    | Periodontitis indicator — one variable                       |
+| `cpipm100` | Periodontitis indicator — alternate variable                 |
 | `zahnlos`  | Edentulism (complete tooth loss) indicator                          |
 | `schulst`  | Education/school status                                             |
 | `ostwest`  | Region (former East/West Germany)                                   |
