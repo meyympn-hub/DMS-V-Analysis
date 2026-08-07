@@ -11,7 +11,7 @@
 *
 * Output  : data/DMS-V_m.dta
 *
-* Notes   : Expected sample sizes (for sanity-checking after appending):
+* Notes   : Expected(Available) sample sizes:
 *             Kinder               = 1,468
 *             Juengere Erwachsene    =   966
 *             Juengere Senioren      = 1,042
@@ -36,7 +36,7 @@ append using "../data/DMS-V_Juengere_Erwachsene.dta"
 append using "../data/DMS-V_Aeltere_Senioren.dta"
 append using "../data/DMS-V_3_juengere_Senioren.dta"
 
-* Quick sanity check against expected sample sizes above
+* check against expected sample sizes above
 tab studygroup
 tab geschl
 
